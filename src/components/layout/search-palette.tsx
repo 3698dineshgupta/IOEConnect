@@ -279,7 +279,7 @@ function PaletteBody({ initialQuery, close }: { initialQuery: string; close: () 
             icon = o.hit.kind === "subject" ? <BookOpen aria-hidden /> : <FileText aria-hidden />;
             title = (
               <span className="flex items-center gap-1.5">
-                <span className="truncate">{o.hit.title}</span>
+                <span className="line-clamp-2 break-words">{o.hit.title}</span>
                 {o.hit.premium && <Crown className="size-3.5 shrink-0 text-accent" aria-label="Premium" />}
               </span>
             );
@@ -319,7 +319,7 @@ function PaletteBody({ initialQuery, close }: { initialQuery: string; close: () 
                 {icon}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-foreground">{title}</span>
+                <span className="block text-sm font-semibold leading-snug text-foreground [&_.truncate]:whitespace-normal">{title}</span>
                 {sub && <span className="block truncate text-xs text-muted-foreground">{sub}</span>}
               </span>
               <ArrowRight aria-hidden className={cn("size-4 shrink-0 transition-all", on ? "translate-x-0 text-primary opacity-100" : "-translate-x-1 opacity-0")} />

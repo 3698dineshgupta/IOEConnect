@@ -156,10 +156,10 @@ export function SearchBar({
                 className={cn("cursor-pointer rounded px-3 py-2", i === active ? "bg-primary-soft" : "hover:bg-muted")}
               >
                 <p className="flex items-center gap-1.5 text-sm font-medium">
-                  <span className="truncate">{h.title}</span>
+                  <span className="line-clamp-2 break-words">{h.title}</span>
                   {h.premium && <Crown className="size-3 shrink-0 text-accent" aria-label="Premium" />}
                 </p>
-                <p className="truncate text-xs text-muted-foreground">{h.label}</p>
+                <p className="line-clamp-1 text-xs text-muted-foreground">{h.label}</p>
               </li>
             ))
           )}

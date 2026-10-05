@@ -261,7 +261,12 @@ body {
   max-width: 100vw;
 }
 
-h1, h2, h3, h4 { letter-spacing: -0.02em; text-wrap: balance; }
+/* Layered so every grid-cols-* utility still wins. */
+@layer base {
+  .grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+h1, h2, h3, h4 { letter-spacing: -0.02em; text-wrap: balance; overflow-wrap: break-word; }
 p { text-wrap: pretty; }
 
 :focus-visible {

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getProgramTree, getPrograms } from "@/lib/curriculum";
+import { deriveCredits, splitMarks } from "@/lib/scgpa";
 import type { ProgramTree, Subject } from "@/lib/types";
 import type { CalcElectiveGroup, CalcSemester, CalcSubject, SavedSubject } from "@/components/calculator/types";
 
@@ -12,14 +13,19 @@ export interface CalculatorProgram {
   semesters: CalcSemester[];
 }
 
-const toCalcSubject = (s: Subject): CalcSubject => ({
-  slug: s.slug,
-  code: s.code,
-  name: s.name,
-  fullMarks: typeof s.full_marks === "number" && s.full_marks > 0 ? s.full_marks : null,
-  ltp: s.ltp?.trim() || null,
-  credits: typeof s.credits === "number" && s.credits > 0 ? Number(s.credits) : null,
-});
+const toCalcSubject = (s: Subject): CalcSubject => {
+  const fullMarks = typeof s.full_marks === "number" && s.full_marks > 0 ? s.full_marks : null;
+  const ltp = s.ltp?.trim() || null;
+  return {
+    slug: s.slug,
+    code: s.code,
+    name: s.name,
+    fullMarks,
+    ltp,
+    max: fullMarks ? splitMarks(fullMarks, ltp) : null,
+    credits: typeof s.credits === "number" && s.credits > 0 ? Number(s.credits) : deriveCredits(s.lecture_hours, ltp),
+  };
+};
 
 function toSemesters(tree: ProgramTree | null): CalcSemester[] {
   const bySem = new Map<number, Subject[]>();
@@ -81,7 +87,8 @@ export function parseSavedSubjects(raw: unknown): SavedSubject[] {
     const r = item as Record<string, unknown>;
     if (typeof r.slug !== "string" || typeof r.obtained !== "number" || typeof r.fullMarks !== "number") continue;
     if (!Number.isFinite(r.obtained) || !Number.isFinite(r.fullMarks)) continue;
-    out.push({ slug: r.slug, obtained: r.obtained, fullMarks: r.fullMarks });
+    const n = (v: unknown) => (typeof v === "number" && Number.isFinite(v) ? v : undefined);
+    out.push({ slug: r.slug, obtained: r.obtained, fullMarks: r.fullMarks, theory: n(r.theory), internal: n(r.internal), practical: n(r.practical), credits: n(r.credits) });
   }
   return out;
 }

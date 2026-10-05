@@ -4,9 +4,10 @@ import * as React from "react";
 import { toast } from "sonner";
 import { Download, Eraser } from "lucide-react";
 import { Button } from "@/components/ui";
+import { cn } from "@/lib/utils";
 import { ROMAN, formatFixed } from "@/lib/scgpa";
 import { SemesterStrip } from "./SemesterStrip";
-import { SubjectRow } from "./SubjectRow";
+import { ROW_COLS, SubjectRow } from "./SubjectRow";
 import { ElectivePicker } from "./ElectivePicker";
 import { SummaryPanel } from "./SummaryPanel";
 import { HowCalculated } from "./HowCalculated";
@@ -31,6 +32,10 @@ export default function Calculator(props: CalculatorProps) {
   const topGrade = [...bands].sort((a, b) => b.points - a.points)[0]?.grade ?? "";
   const anyEntered = models.some((m) => m.entered > 0);
   const roman = ROMAN[active - 1] ?? String(active);
+  // Total row: credits and full marks of every listed subject; points = Σ(grade point × credits) of graded ones.
+  const totalCredits = (model?.rows ?? []).reduce((a, r) => a + (r.credits ?? 0), 0);
+  const totalFull = (model?.rows ?? []).reduce((a, r) => a + (r.fullMarks ?? 0), 0);
+  const creditPoints = (model?.rows ?? []).reduce((a, r) => a + (r.result ? r.result.points * (r.credits ?? 0) : 0), 0);
 
   // Debounced announcement for screen readers (avoids reading every keystroke).
   const liveText = model
@@ -80,7 +85,17 @@ export default function Calculator(props: CalculatorProps) {
         body: JSON.stringify({
           semesters: models.map((m) => ({
             semester: m.number,
-            subjects: m.result.entries.map((e) => ({ slug: e.slug, obtained: e.obtained, fullMarks: e.fullMarks })),
+            subjects: m.rows
+              .filter((r) => r.result)
+              .map((r) => ({
+                slug: r.subject.slug,
+                obtained: r.result!.obtained,
+                fullMarks: r.result!.fullMarks,
+                ...(r.result!.parts
+                  ? { theory: r.result!.parts.theory, internal: r.result!.parts.internalRaw, practical: r.result!.parts.practical }
+                  : {}),
+                ...(r.credits !== null ? { credits: r.credits } : {}),
+              })),
           })),
         }),
       });
@@ -120,8 +135,9 @@ export default function Calculator(props: CalculatorProps) {
         <p className="text-sm font-semibold text-primary">SCGPA calculator · {program.name}</p>
         <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">Type your marks. We&apos;ll do the grading.</h1>
         <p className="mt-3 text-[0.9375rem] leading-relaxed text-muted-foreground">
-          Every semester already lists its subjects and full marks. Enter what you scored to see your grade, SGPA and CGPA, then
-          download it as an IOE Connect gradesheet.
+          Every semester already lists its subjects, credits and the Theory, Internal and Practical marks. Enter what you scored in
+          each part; we apply the 20% internal rule and the 40% pass rule, then show your grade, SGPA and CGPA. Download it as an IOE
+          Connect gradesheet.
         </p>
       </header>
 
@@ -157,13 +173,18 @@ export default function Calculator(props: CalculatorProps) {
               <>
                 <div
                   aria-hidden
-                  className="hidden grid-cols-[minmax(0,1fr)_5.5rem_6.5rem_4rem_6.5rem] gap-x-3 border-b border-border bg-surface-sunken/60 px-5 py-2 text-[0.6875rem] font-semibold text-muted-foreground md:grid"
+                  className={cn(
+                    "hidden gap-x-3 border-b border-border bg-surface-sunken/60 px-5 py-2.5 text-[0.6875rem] font-bold uppercase tracking-wide text-muted-foreground md:grid",
+                    ROW_COLS,
+                  )}
                 >
                   <span>Subject</span>
-                  <span className="text-right">Full marks</span>
-                  <span className="text-right">Obtained</span>
-                  <span className="text-right">%</span>
-                  <span className="text-right">Grade · GP</span>
+                  <span className="text-center">Credit</span>
+                  <span className="text-center">Theory</span>
+                  <span className="text-center">Internal</span>
+                  <span className="text-center">Practical</span>
+                  <span className="text-center">Grade</span>
+                  <span className="text-center">Points</span>
                 </div>
                 <ul className="divide-y divide-border">
                   {model.rows
@@ -204,6 +225,28 @@ export default function Calculator(props: CalculatorProps) {
                     </ul>
                   </div>
                 )}
+                {/* Total */}
+                <div className="border-t border-border bg-surface-sunken/60 px-4 py-3.5 sm:px-5">
+                  <div className={cn("flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-sm font-semibold md:grid md:gap-x-3", ROW_COLS)}>
+                    <span>Total</span>
+                    <span className="text-center font-mono tabular-nums md:block">
+                      <span className="mr-1 font-sans text-xs font-medium text-muted-foreground md:sr-only">Credits</span>
+                      {+totalCredits.toFixed(1)}
+                    </span>
+                    <span className="text-center font-mono tabular-nums md:col-span-3">
+                      <span className="mr-1 font-sans text-xs font-medium text-muted-foreground md:sr-only">Marks</span>
+                      {+model.result.totalObtained.toFixed(2)} / {totalFull}
+                    </span>
+                    <span className="text-center font-mono tabular-nums">
+                      <span className="mr-1 font-sans text-xs font-medium text-muted-foreground md:sr-only">SGPA</span>
+                      {formatFixed(model.result.sgpa, 2)}
+                    </span>
+                    <span className="text-center font-mono tabular-nums">
+                      <span className="mr-1 font-sans text-xs font-medium text-muted-foreground md:sr-only">Points</span>
+                      {creditPoints.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
               </>
             )}
           </section>

@@ -1,4 +1,4 @@
-import type { CalcSemester, ChoiceMap, EntryMap, SavedSemester } from "./types";
+import type { CalcSemester, ChoiceMap, EntryDraft, EntryMap, SavedSemester } from "./types";
 import { choiceKey } from "./types";
 
 export interface DraftState {
@@ -15,6 +15,7 @@ export interface DraftStore {
   set: (updater: (s: DraftState) => DraftState) => void;
 }
 
+const BLANK: EntryDraft = { theory: "", internal: "", practical: "", credits: "", obtained: "", fullMarks: "" };
 const MAX_LEN = 12;
 const clip = (v: unknown) => (typeof v === "string" ? v.slice(0, MAX_LEN) : "");
 
@@ -30,7 +31,18 @@ export function draftFromSaved(saved: SavedSemester[], semesters: CalcSemester[]
   for (const row of saved) {
     for (const s of row.subjects) {
       if (!known.has(s.slug)) continue;
-      entries[s.slug] = { obtained: String(s.obtained), fullMarks: known.get(s.slug) == null ? String(s.fullMarks) : "" };
+      const hasParts = s.theory !== undefined || s.internal !== undefined || s.practical !== undefined;
+      const str = (v: number | undefined) => (v === undefined ? "" : String(v));
+      entries[s.slug] = {
+        ...BLANK,
+        theory: str(s.theory),
+        internal: str(s.internal),
+        practical: str(s.practical),
+        credits: str(s.credits),
+        // Old saves only kept the total; show it for subjects that have no component split.
+        obtained: hasParts ? "" : String(s.obtained),
+        fullMarks: known.get(s.slug) == null ? String(s.fullMarks) : "",
+      };
     }
     const sem = semesters.find((x) => x.number === row.semester);
     for (const g of sem?.electives ?? []) {
@@ -50,7 +62,14 @@ function mergeStored(base: DraftState, raw: unknown): DraftState {
     for (const [slug, v] of Object.entries(r.entries as Record<string, unknown>)) {
       if (!v || typeof v !== "object" || slug.length > 200) continue;
       const e = v as Record<string, unknown>;
-      entries[slug] = { obtained: clip(e.obtained), fullMarks: clip(e.fullMarks) };
+      entries[slug] = {
+        theory: clip(e.theory),
+        internal: clip(e.internal),
+        practical: clip(e.practical),
+        credits: clip(e.credits),
+        obtained: clip(e.obtained),
+        fullMarks: clip(e.fullMarks),
+      };
     }
   }
   const choices: ChoiceMap = { ...base.choices };

@@ -25,7 +25,7 @@ export function ResourceSearch({ initialQuery = "", className }: { initialQuery?
         <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary ring-1 ring-inset ring-primary/15 transition-transform duration-200 group-hover:scale-105">
           <Search className="size-[1.05rem]" aria-hidden />
         </span>
-        <span className={cn("min-w-0 flex-1 truncate text-base sm:text-lg", initialQuery ? "text-foreground" : "text-muted-foreground")}>
+        <span className={cn("min-w-0 flex-1 truncate text-sm min-[400px]:text-base sm:text-lg", initialQuery ? "text-foreground" : "text-muted-foreground")}>
           {initialQuery || "Search subjects, notes, PYQs…"}
         </span>
         <span className="hidden shrink-0 items-center gap-1 sm:inline-flex" aria-hidden>

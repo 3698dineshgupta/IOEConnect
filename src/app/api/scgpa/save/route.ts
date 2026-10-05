@@ -3,7 +3,7 @@ import "server-only";
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
-import { calcSemester, normalizeBands, round2 } from "@/lib/scgpa";
+import { calcSemester, evaluateSubject, normalizeBands, round2, type SubjectInput } from "@/lib/scgpa";
 import { createServerClient } from "@/lib/supabase/server";
 import { indexSubjects, loadCalculatorProgram } from "@/app/calculator/data";
 
@@ -20,6 +20,10 @@ const SaveSchema = z.object({
               slug: z.string().trim().min(1).max(200),
               obtained: marks,
               fullMarks: marks.min(1),
+              theory: marks.optional(),
+              internal: marks.optional(),
+              practical: marks.optional(),
+              credits: z.number().finite().min(0).max(12).optional(),
             }),
           )
           .max(40),
@@ -56,31 +60,48 @@ export async function POST(request: Request) {
     const index = indexSubjects(semesters);
 
     const sentSemesters = new Set<number>();
-    const rows: { user_id: string; semester: number; subjects: { slug: string; obtained: number; fullMarks: number }[]; sgpa: number; total_credits: number }[] = [];
+    type Stored = { slug: string; obtained: number; fullMarks: number; theory?: number; internal?: number; practical?: number; credits?: number };
+    const rows: { user_id: string; semester: number; subjects: Stored[]; sgpa: number; total_credits: number }[] = [];
 
     for (const sem of parsed.data.semesters) {
       if (sentSemesters.has(sem.semester)) continue;
       sentSemesters.add(sem.semester);
 
       const seen = new Set<string>();
-      const subjects: { slug: string; obtained: number; fullMarks: number; credits: number | null }[] = [];
+      const inputs: SubjectInput[] = [];
+      const stored: Stored[] = [];
       for (const s of sem.subjects) {
         const known = index.get(s.slug);
         if (!known || known.semester !== sem.semester || seen.has(s.slug)) continue;
         seen.add(s.slug);
+        const credits = s.credits && s.credits > 0 ? s.credits : known.subject.credits;
+        const max = known.subject.max;
+        if (max) {
+          // Component-graded subject: recompute from the parts with the same rules as the page (20% cap, 40% pass).
+          const parts = { max, theory: s.theory ?? null, internal: s.internal ?? null, practical: s.practical ?? null };
+          const input: SubjectInput = { slug: s.slug, fullMarks: known.subject.fullMarks, obtained: null, credits, parts };
+          const evaluated = evaluateSubject(input, bands);
+          if (!evaluated) {
+            return Response.json({ message: `Check the marks for ${known.subject.name}.` }, { status: 400 });
+          }
+          inputs.push(input);
+          stored.push({ slug: s.slug, obtained: round2(evaluated.obtained), fullMarks: evaluated.fullMarks, theory: s.theory, internal: s.internal, practical: s.practical, ...(credits ? { credits } : {}) });
+          continue;
+        }
         const fullMarks = known.subject.fullMarks ?? s.fullMarks; // curriculum wins when known
         if (s.obtained > fullMarks) {
           return Response.json({ message: `Marks for ${known.subject.name} can't exceed ${fullMarks}.` }, { status: 400 });
         }
-        subjects.push({ slug: s.slug, obtained: s.obtained, fullMarks, credits: known.subject.credits });
+        inputs.push({ slug: s.slug, obtained: s.obtained, fullMarks, credits });
+        stored.push({ slug: s.slug, obtained: s.obtained, fullMarks, ...(credits ? { credits } : {}) });
       }
 
-      const result = calcSemester(subjects, bands);
+      const result = calcSemester(inputs, bands);
       if (result.sgpa === null) continue; // nothing to store; the old row (if any) is still cleared below
       rows.push({
         user_id: user.id,
         semester: sem.semester,
-        subjects: subjects.map(({ slug, obtained, fullMarks }) => ({ slug, obtained, fullMarks })),
+        subjects: stored,
         sgpa: Math.min(4, Math.max(0, round2(result.sgpa))),
         total_credits: Math.round(result.totalWeight * 10) / 10,
       });

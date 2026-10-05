@@ -25,6 +25,8 @@ export function ProgramCard({ program, priority = false }: { program: ProgramCar
     program.semesters > 0 ? plural(program.semesters, "Semester") : null,
   ].filter(Boolean);
 
+  const label = program.shortName || program.name;
+
   return (
     <article className="bg-gradient-navy ring-gradient group relative isolate overflow-hidden rounded-[2rem] border border-white/10 text-white shadow-xl">
       <style>{`
@@ -42,13 +44,21 @@ export function ProgramCard({ program, priority = false }: { program: ProgramCar
       </div>
 
       <div className="grid items-center lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
-        <div className="relative p-7 sm:p-10 lg:p-14">
+        <div className="relative min-w-0 p-6 sm:p-10 lg:p-14">
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-bright">
             <span aria-hidden className="size-1.5 rounded-full bg-cyan-bright shadow-[0_0_10px_var(--cyan-bright)]" />
             {program.name}
           </p>
-          <h3 className="mt-5 text-7xl font-extrabold leading-[0.9] tracking-[-0.06em] sm:text-8xl">
-            {program.shortName || program.name}
+          <h3
+            className={cn(
+              "mt-5 font-extrabold tracking-[-0.05em] [overflow-wrap:anywhere]",
+              // A short code (CSE, BEX) can be huge; a full name has to fit a 320px phone.
+              label.length <= 5
+                ? "text-7xl leading-[0.9] sm:text-8xl"
+                : "text-[clamp(2rem,10.5vw,3rem)] leading-[1.02] sm:text-6xl",
+            )}
+          >
+            {label}
           </h3>
           {counts.length > 0 && (
             <p className="mt-6 text-lg font-semibold text-white/90 sm:text-xl">{counts.join(" • ")}</p>

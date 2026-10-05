@@ -8,7 +8,10 @@ import {
   fullMarksError,
   marksError,
   parseMarks,
+  partsErrors,
+  type ComponentKey,
   type GradeBand,
+  type PartsInput,
   type SemesterResult,
   type SubjectResult,
 } from "@/lib/scgpa";
@@ -25,6 +28,11 @@ export interface RowModel {
   obtained: number | null;
   fullError: string | null;
   marksError: string | null;
+  /** Theory / internal / practical entry (only for subjects that have a component split). */
+  parts: PartsInput | null;
+  partErrors: Partial<Record<ComponentKey, string>>;
+  /** Credits that count: the student's correction, else the subject's own. */
+  credits: number | null;
   result: SubjectResult | null;
 }
 
@@ -39,16 +47,45 @@ export interface SemesterModel {
   hasSubjects: boolean;
 }
 
-const EMPTY: EntryDraft = { obtained: "", fullMarks: "" };
+const EMPTY: EntryDraft = { theory: "", internal: "", practical: "", credits: "", obtained: "", fullMarks: "" };
+
+function effectiveCredits(subject: CalcSubject, entry: EntryDraft): number | null {
+  const typed = parseMarks(entry.credits);
+  return typed !== null && Number.isFinite(typed) && typed > 0 && typed <= 12 ? typed : subject.credits;
+}
 
 function buildRow(subject: CalcSubject, group: string | null, entry: EntryDraft, bands: GradeBand[]): RowModel {
+  const credits = effectiveCredits(subject, entry);
+  if (subject.max) {
+    const num = (raw: string) => parseMarks(raw);
+    const parts: PartsInput = {
+      max: subject.max,
+      theory: num(entry.theory),
+      internal: num(entry.internal),
+      practical: num(entry.practical),
+    };
+    const result = evaluateSubject({ slug: subject.slug, fullMarks: subject.fullMarks, obtained: null, credits, parts }, bands);
+    return {
+      subject,
+      group,
+      entry,
+      fullMarks: subject.fullMarks,
+      obtained: result?.obtained ?? null,
+      fullError: null,
+      marksError: null,
+      parts,
+      partErrors: partsErrors(parts),
+      credits,
+      result,
+    };
+  }
   const typedFull = subject.fullMarks == null ? parseMarks(entry.fullMarks) : null;
   const fullMarks = subject.fullMarks ?? typedFull;
   const obtained = parseMarks(entry.obtained);
   const fullError = subject.fullMarks == null ? fullMarksError(typedFull) : null;
   const mErr = obtained === null ? null : Number.isNaN(obtained) ? "Enter a number." : marksError(obtained, fullError ? null : fullMarks);
-  const result = evaluateSubject({ slug: subject.slug, fullMarks, obtained, credits: subject.credits }, bands);
-  return { subject, group, entry, fullMarks, obtained, fullError, marksError: mErr, result };
+  const result = evaluateSubject({ slug: subject.slug, fullMarks, obtained, credits }, bands);
+  return { subject, group, entry, fullMarks, obtained, fullError, marksError: mErr, parts: null, partErrors: {}, credits, result };
 }
 
 function buildSemester(sem: CalcSemester, entries: Record<string, EntryDraft>, choices: Record<string, string>, bands: GradeBand[]): SemesterModel {
@@ -60,7 +97,13 @@ function buildSemester(sem: CalcSemester, entries: Record<string, EntryDraft>, c
     else openGroups.push(g.label);
   }
   const result = calcSemester(
-    rows.map((r) => ({ slug: r.subject.slug, fullMarks: r.fullMarks, obtained: r.obtained, credits: r.subject.credits })),
+    rows.map((r) => ({
+      slug: r.subject.slug,
+      fullMarks: r.fullMarks,
+      obtained: r.parts ? null : r.obtained,
+      credits: r.credits,
+      parts: r.parts,
+    })),
     bands,
   );
   return {

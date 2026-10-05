@@ -215,8 +215,8 @@ export function ResourceRow({ resource, meta }: { resource: PublicResourceView; 
       >
         <TypeTile type={resource.resource_type} className="size-10" />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-semibold">{resource.title}</span>
-          <span className="block truncate text-xs text-muted-foreground">
+          <span className="line-clamp-2 break-words text-sm font-semibold leading-snug">{resource.title}</span>
+          <span className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
             {[resource.subject_name, RESOURCE_TYPE_LABELS[resource.resource_type], range, meta].filter(Boolean).join(" · ")}
           </span>
         </span>

@@ -1,8 +1,16 @@
 /**
  * SCGPA calculation — pure, dependency-free, safe on client and server.
  *
- * Model
- * -----
+ * Model (IOE grading, 2080/81)
+ * ----------------------------
+ * - A subject is graded from up to three components: Theory (final board exam), Internal
+ *   (college assessment) and Practical.
+ * - 20% RULE: the Internal mark is capped by the Theory result:
+ *     ceiling% = min(100, theory% + 20);  internal = min(entered, ceiling% / 100 × full internal).
+ *   Subjects without a theory component are not capped.
+ * - PASS RULE: each component needs at least 40% of its own full marks (internal is checked
+ *   after the cap). Failing any component gives an overall F (0 points).
+ * - total = theory + capped internal + practical; percent = total / full marks × 100.
  * - Each subject has full marks (from the curriculum, or typed by the student when the
  *   curriculum does not know it) and the student's obtained marks.
  * - percent = obtained / fullMarks * 100 (full precision).
@@ -33,20 +41,121 @@ export interface GradeBandInput {
   min_percent?: number | null;
 }
 
-/**
- * DEFAULT bands — UNVERIFIED. These are placeholders, not confirmed against the official
- * TU/IOE grading rules. Admins must confirm/edit them in Admin → Settings → SCGPA.
- */
+/** Official IOE grading scale (2080/81), supplied by the site owner. Editable in Admin → Settings → SCGPA. */
 export const DEFAULT_GRADE_BANDS: readonly GradeBand[] = [
-  { grade: "A+", points: 4.0, min_percent: 90 },
-  { grade: "A", points: 3.7, min_percent: 80 },
+  { grade: "A", points: 4.0, min_percent: 80 },
+  { grade: "A-", points: 3.7, min_percent: 75 },
   { grade: "B+", points: 3.3, min_percent: 70 },
-  { grade: "B", points: 3.0, min_percent: 60 },
-  { grade: "C+", points: 2.7, min_percent: 50 },
-  { grade: "C", points: 2.3, min_percent: 45 },
-  { grade: "D", points: 2.0, min_percent: 40 },
+  { grade: "B", points: 3.0, min_percent: 65 },
+  { grade: "B-", points: 2.7, min_percent: 60 },
+  { grade: "C+", points: 2.3, min_percent: 55 },
+  { grade: "C", points: 2.0, min_percent: 50 },
+  { grade: "D", points: 1.0, min_percent: 40 },
   { grade: "F", points: 0.0, min_percent: 0 },
 ];
+
+/** Minimum share of each component's full marks needed to pass it. */
+export const COMPONENT_PASS_PERCENT = 40;
+/** Internal marks can be at most this many percentage points above the theory percentage. */
+export const INTERNAL_CAP_BONUS = 20;
+
+export interface ComponentMax {
+  theory: number;
+  internal: number;
+  practical: number;
+}
+export type ComponentKey = keyof ComponentMax;
+export const COMPONENT_KEYS: readonly ComponentKey[] = ["theory", "internal", "practical"];
+export const COMPONENT_LABELS: Record<ComponentKey, string> = { theory: "Theory", internal: "Internal", practical: "Practical" };
+
+const r2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
+
+/**
+ * Split a subject's total marks into Theory / Internal / Practical maxima from its L-T-P and total.
+ *   - no practical hours:   60% theory + 40% internal            (100 → 60/40, 50 → 30/20)
+ *   - lecture + practical:  total 100 → 30/20/50; above 100 → 60/40/(total − 100)
+ *   - practical only:       40% internal + 60% practical          (50 → 20/30)
+ * Matches the official examples (Maths 60/40, Programming 60/40/50, Drawing 30/20/50, Physics 60/40/25).
+ */
+export function splitMarks(fullMarks: number, ltp: string | null | undefined): ComponentMax {
+  const [l = 0, , p = 0] = (ltp ?? "").split("-").map((x) => Number(x));
+  const lecture = Number.isFinite(l) ? l : 0;
+  const practical = Number.isFinite(p) ? p : 0;
+  if (practical <= 0) return { theory: r2(fullMarks * 0.6), internal: r2(fullMarks * 0.4), practical: 0 };
+  if (lecture <= 0) return { theory: 0, internal: r2(fullMarks * 0.4), practical: r2(fullMarks * 0.6) };
+  if (fullMarks > 100) return { theory: 60, internal: 40, practical: r2(fullMarks - 100) };
+  if (fullMarks === 100) return { theory: 30, internal: 20, practical: 50 };
+  return { theory: r2(fullMarks * 0.3), internal: r2(fullMarks * 0.2), practical: r2(fullMarks * 0.5) };
+}
+
+/**
+ * Credits when the curriculum has none: 1 credit per 15 lecture hours, plus 1 for a short lecture
+ * subject with practical work (e.g. Drawing 1-0-3 → 2); practical-only work is 1 credit per 30 hours.
+ */
+export function deriveCredits(lectureHours: number | null | undefined, ltp: string | null | undefined): number | null {
+  const h = typeof lectureHours === "number" && lectureHours > 0 ? lectureHours : null;
+  if (h === null) return null;
+  const [l = 0, , p = 0] = (ltp ?? "").split("-").map((x) => Number(x));
+  if (l > 0) return h / 15 + (p > 0 && l < 3 ? 1 : 0);
+  return Math.max(1, Math.round((h / 30) * 2) / 2);
+}
+
+export interface PartsInput {
+  max: ComponentMax;
+  theory: number | null;
+  internal: number | null;
+  practical: number | null;
+}
+
+export interface PartsResult {
+  theory: number;
+  /** Internal as entered. */
+  internalRaw: number;
+  /** Internal after the 20% rule. */
+  internal: number;
+  practical: number;
+  capped: boolean;
+  /** Components below 40% (internal judged after the cap). */
+  failed: ComponentKey[];
+}
+
+/** Apply the 20% rule. Returns the internal mark that counts. */
+export function capInternal(theory: number, theoryMax: number, internal: number, internalMax: number): { internal: number; capped: boolean } {
+  if (theoryMax <= 0 || internalMax <= 0) return { internal, capped: false };
+  const ceilingPct = Math.min(100, (theory / theoryMax) * 100 + INTERNAL_CAP_BONUS);
+  const ceiling = (ceilingPct / 100) * internalMax;
+  return internal > ceiling + 1e-9 ? { internal: ceiling, capped: true } : { internal, capped: false };
+}
+
+/** Per-component validation messages (empty object = fine). */
+export function partsErrors(p: PartsInput): Partial<Record<ComponentKey, string>> {
+  const out: Partial<Record<ComponentKey, string>> = {};
+  for (const k of COMPONENT_KEYS) {
+    const v = p[k];
+    if (v === null || p.max[k] <= 0) continue;
+    if (!isNum(v)) out[k] = "Enter a number.";
+    else if (v < 0) out[k] = "Can't be negative.";
+    else if (v > p.max[k]) out[k] = `Max is ${p.max[k]}.`;
+  }
+  return out;
+}
+
+/** Evaluate the components; null until every component the subject has is entered and valid. */
+export function evaluateParts(p: PartsInput): PartsResult | null {
+  if (Object.keys(partsErrors(p)).length) return null;
+  const need = COMPONENT_KEYS.filter((k) => p.max[k] > 0);
+  if (!need.length || need.some((k) => !isNum(p[k]))) return null;
+  const theory = p.max.theory > 0 ? (p.theory as number) : 0;
+  const internalRaw = p.max.internal > 0 ? (p.internal as number) : 0;
+  const practical = p.max.practical > 0 ? (p.practical as number) : 0;
+  const { internal, capped } = capInternal(theory, p.max.theory, internalRaw, p.max.internal);
+  const failed: ComponentKey[] = [];
+  const below = (v: number, max: number) => max > 0 && v + 1e-9 < (max * COMPONENT_PASS_PERCENT) / 100;
+  if (below(theory, p.max.theory)) failed.push("theory");
+  if (below(internal, p.max.internal)) failed.push("internal");
+  if (below(practical, p.max.practical)) failed.push("practical");
+  return { theory, internalRaw, internal, practical, capped, failed };
+}
 
 export type WeightMode = "marks" | "credits";
 
@@ -57,6 +166,8 @@ export interface SubjectInput {
   /** Obtained marks; null = not entered (subject is not counted). */
   obtained: number | null;
   credits?: number | null;
+  /** Component marks (theory / internal / practical). When set it replaces `fullMarks`/`obtained`. */
+  parts?: PartsInput | null;
 }
 
 export interface SubjectResult {
@@ -68,6 +179,8 @@ export interface SubjectResult {
   points: number;
   credits: number | null;
   passed: boolean;
+  /** Present when graded from components. */
+  parts?: PartsResult;
 }
 
 export interface SemesterResult {
@@ -157,6 +270,26 @@ export function fullMarksError(fullMarks: number | null): string | null {
 
 /** Evaluate one subject, or null when it does not count (empty / invalid). */
 export function evaluateSubject(s: SubjectInput, bands: readonly GradeBand[]): SubjectResult | null {
+  if (s.parts) {
+    const parts = evaluateParts(s.parts);
+    if (!parts) return null;
+    const fullMarks = s.parts.max.theory + s.parts.max.internal + s.parts.max.practical;
+    const obtained = parts.theory + parts.internal + parts.practical;
+    const percent = (obtained / fullMarks) * 100;
+    const fail = failingGrade(bands);
+    const g = parts.failed.length ? { grade: fail.grade, points: 0, passed: false } : gradeFor(percent, bands);
+    return {
+      slug: s.slug,
+      fullMarks,
+      obtained,
+      percent,
+      grade: g.grade,
+      points: g.points,
+      credits: isNum(s.credits) && s.credits > 0 ? s.credits : null,
+      passed: g.passed,
+      parts,
+    };
+  }
   const { fullMarks, obtained } = s;
   if (!isNum(fullMarks) || !isNum(obtained)) return null;
   if (fullMarksError(fullMarks) || marksError(obtained, fullMarks)) return null;

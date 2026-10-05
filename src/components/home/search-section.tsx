@@ -17,7 +17,7 @@ export function SearchSection() {
         className="group flex h-16 w-full items-center gap-4 rounded-2xl border border-border-strong bg-card px-5 text-left shadow-md transition-[box-shadow,border-color,transform] duration-200 hover:border-primary/50 hover:shadow-lg focus-visible:border-primary sm:h-[4.5rem] sm:px-6"
       >
         <Search className="size-5 shrink-0 text-primary transition-transform duration-200 group-hover:scale-110" aria-hidden />
-        <span className="min-w-0 flex-1 truncate text-base text-muted-foreground sm:text-lg">Search subjects, notes, PYQs…</span>
+        <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground min-[400px]:text-base sm:text-lg">Search subjects, notes, PYQs…</span>
         <span className="hidden shrink-0 items-center gap-1 sm:inline-flex" aria-hidden>
           <Kbd>{mod}</Kbd>
           <Kbd>K</Kbd>
