@@ -141,6 +141,11 @@ export function RegisterForm({ programs = [], initialReferral = "" }: { programs
             <Input id="referral_code" name="referral_code" defaultValue={initialReferral} autoCapitalize="characters" autoComplete="off" />
           </FormField>
           <Button type="submit" className="w-full" size="lg" loading={loading}>Create account</Button>
+          <p className="text-center text-xs text-muted-foreground">
+            By creating an account you agree to our{" "}
+            <Link href="/terms" className="link-underline font-medium text-primary">Terms of Service</Link> and{" "}
+            <Link href="/privacy" className="link-underline font-medium text-primary">Privacy Policy</Link>.
+          </p>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already have an account?{" "}

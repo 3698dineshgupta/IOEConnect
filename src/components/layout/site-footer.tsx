@@ -82,9 +82,17 @@ export function SiteFooter() {
       <div className="relative border-t border-border">
         <div className="mx-auto flex max-w-310 flex-col items-start gap-2 px-5 py-5 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6">
           <p>&copy; {new Date().getFullYear()} IOE Connect. All rights reserved.</p>
-          <ReportBugDialog variant="link" className="h-auto min-h-10 p-0 text-xs md:min-h-0">
-            Report a bug
-          </ReportBugDialog>
+          <nav aria-label="Legal" className="flex flex-wrap items-center gap-x-5 gap-y-1">
+            <Link href="/privacy" className="hover:text-foreground">
+              Privacy Policy
+            </Link>
+            <Link href="/terms" className="hover:text-foreground">
+              Terms of Service
+            </Link>
+            <ReportBugDialog variant="link" className="h-auto min-h-10 p-0 text-xs md:min-h-0">
+              Report a bug
+            </ReportBugDialog>
+          </nav>
         </div>
       </div>
     </footer>

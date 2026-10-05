@@ -35,3 +35,6 @@ next-env.d.ts
 
 # Local-only working data
 /import/
+
+# A cloned third-party skill repo (installed into ~/.claude, not part of this app)
+/claude-seo/

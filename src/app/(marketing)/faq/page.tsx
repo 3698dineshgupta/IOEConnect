@@ -24,17 +24,17 @@ const faqs: FAQItem[] = [
   {
     question: 'How do I use the SCGPA Calculator?',
     answer:
-      'The SCGPA Calculator is simple to use: Select your semester (1-8), add subjects with their credit hours and grades, and the calculator will automatically compute your SGPA and cumulative CGPA. You can save your results if you\'re logged in.',
+      'Pick a semester and type your Theory, Internal and Practical marks for each subject. The calculator applies the IOE rules (the 20% internal cap and the 40% pass mark in each part), gives each subject a grade, and works out your SGPA and cumulative CGPA. Log in to save your marks.',
   },
   {
     question: 'What grades does the calculator support?',
     answer:
-      'The calculator supports the standard IOE grading scale: A+ (4.0), A (3.7), B+ (3.3), B (3.0), C+ (2.7), C (2.3), D (2.0), and F (0.0). Custom grading tables can be configured by administrators.',
+      'It uses the 2080/81 IOE scale: 80%+ A (4.0), 75-79% A- (3.7), 70-74% B+ (3.3), 65-69% B (3.0), 60-64% B- (2.7), 55-59% C+ (2.3), 50-54% C (2.0), 40-49% D (1.0) and below 40% F (0).',
   },
   {
     question: 'How accurate is the GPA calculation?',
     answer:
-      'The calculator uses the standard formula: SGPA = (Sum of Grade Points × Credits) / Total Credits. It is accurate to two decimal places. Always verify critical calculations with your academic advisor.',
+      'SGPA = Σ(grade point × credits) ÷ Σ credits, shown to two decimals. The calculator is unofficial, so always check important figures against your official marksheet.',
   },
   {
     question: 'Can I save my calculator results?',
@@ -59,7 +59,7 @@ const faqs: FAQItem[] = [
   {
     question: 'Is my information secure?',
     answer:
-      'Yes, we take data security seriously. All sensitive information is encrypted and stored securely on our servers. We comply with data protection standards and never share your information without consent.',
+      'We use encrypted connections, hashed passwords, private file storage and access controls, and we do not sell your information. Read the Privacy Policy (link in the footer) for exactly what we collect and who helps us run the site.',
   },
   {
     question: 'How do I contact support?',
