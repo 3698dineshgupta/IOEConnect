@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   description:
     "Notes, previous year questions and study resources for IOE students, organised by program, year and semester.",
   openGraph: { title: "IOE Connect", description: "Everything you need for IOE, in one place.", type: "website", images: ["/logo.png"] },
-  icons: { icon: "/logo.png" },
 };
 
 export const viewport: Viewport = {
