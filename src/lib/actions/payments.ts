@@ -193,6 +193,10 @@ export async function submitPayment(input: SubmitPaymentInput): Promise<ActionRe
 
     if (insertError) {
       if (insertError.code === "23505") {
+        // Two unique rules: one pending payment per user (race-safe) and one use per transaction reference.
+        if (/one_pending/i.test(insertError.message)) {
+          return { ok: false, error: "You already have a payment waiting for review. We'll verify it soon, usually within 24 hours." };
+        }
         return { ok: false, error: "This transaction reference has already been submitted." };
       }
       if (/plan is not available/i.test(insertError.message)) {

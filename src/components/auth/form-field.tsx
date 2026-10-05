@@ -1,4 +1,5 @@
 import * as React from "react";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { Label } from "@/components/ui/label";
 
 export function FormField({
@@ -38,7 +39,7 @@ export function fieldErrors(issues: { path: PropertyKey[]; message: string }[]) 
   return out;
 }
 
-/** Only allow same-site relative redirects. */
+/** Only allow same-site relative redirects (see lib/safe-redirect). */
 export function safeNext(next: string | null | undefined, fallback = "/dashboard") {
-  return next && next.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\") ? next : fallback;
+  return safeRedirectPath(next, fallback);
 }

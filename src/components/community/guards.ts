@@ -2,6 +2,7 @@ import "server-only";
 
 import { headers } from "next/headers";
 import { getProfile, getSessionUser, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/server";
 import type { Profile } from "@/lib/types";
 
 export const NOT_SIGNED_IN = "Please sign in to continue.";
@@ -49,4 +50,24 @@ export function rateLimit(key: string, limit: number, windowMs: number): boolean
     for (const [k, v] of buckets) if (v.every((t) => now - t >= windowMs)) buckets.delete(k);
   }
   return true;
+}
+
+/**
+ * Shared rate limiter backed by the database (migration 0014), so the limit holds across serverless
+ * instances. Returns true while within `limit` hits per `windowMs`. If the database function is
+ * unavailable (migration not applied yet, or an outage) it falls back to the in-memory limiter, so a
+ * limiter failure never blocks real users and never leaves an endpoint unlimited.
+ */
+export async function rateLimitDb(key: string, limit: number, windowMs: number): Promise<boolean> {
+  try {
+    const { data, error } = await createAdminClient().rpc("rate_limit_hit", {
+      p_key: key,
+      p_limit: limit,
+      p_window_seconds: Math.max(1, Math.ceil(windowMs / 1000)),
+    });
+    if (!error && typeof data === "boolean") return data;
+  } catch {
+    /* fall through to the in-memory limiter */
+  }
+  return rateLimit(key, limit, windowMs);
 }

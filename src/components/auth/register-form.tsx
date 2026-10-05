@@ -52,8 +52,9 @@ export function RegisterForm({ programs = [], initialReferral = "" }: { programs
       });
       if (error) {
         setFormError(
+          // Same wording whether or not the email is taken, so sign-up can't be used to discover who has an account.
           /registered|exists/i.test(error.message)
-            ? "An account with this email already exists. Log in instead."
+            ? "We couldn't create that account. If you already registered, log in or reset your password."
             : "Could not create your account. Check your details and try again.",
         );
         return;

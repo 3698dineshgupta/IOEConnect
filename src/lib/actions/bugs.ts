@@ -7,7 +7,7 @@ import { logAudit } from "@/lib/audit";
 import { createAdminClient, createServerClient } from "@/lib/supabase/server";
 import { BUG_STATUSES } from "@/lib/types";
 import type { ActionResult } from "@/components/community/common";
-import { GENERIC_ERROR, NOT_ALLOWED, clientIp, getAdminProfile, isUuid, rateLimit } from "@/components/community/guards";
+import { GENERIC_ERROR, NOT_ALLOWED, clientIp, getAdminProfile, isUuid, rateLimitDb } from "@/components/community/guards";
 
 const BUCKET = "bug-screenshots";
 
@@ -34,7 +34,7 @@ export async function submitBugReport(input: unknown): Promise<ActionResult> {
   const user = await getSessionUser();
   const ip = await clientIp();
   const key = user ? `bug:user:${user.id}` : `bug:ip:${ip}`;
-  if (!rateLimit(key, 5, 60 * 60 * 1000)) {
+  if (!(await rateLimitDb(key, 5, 60 * 60 * 1000))) {
     return { ok: false, error: "You have sent several reports recently. Please try again later." };
   }
 

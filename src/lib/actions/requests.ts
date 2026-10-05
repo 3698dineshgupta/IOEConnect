@@ -8,7 +8,7 @@ import { getSetting } from "@/lib/settings";
 import { createServerClient } from "@/lib/supabase/server";
 import { REQUEST_STATUSES, RESOURCE_TYPES } from "@/lib/types";
 import { buildAdminNote, parseAdminNote, type ActionResult } from "@/components/community/common";
-import { GENERIC_ERROR, NOT_ALLOWED, NOT_SIGNED_IN, getAdminProfile, isUuid, rateLimit } from "@/components/community/guards";
+import { GENERIC_ERROR, NOT_ALLOWED, NOT_SIGNED_IN, getAdminProfile, isUuid, rateLimitDb } from "@/components/community/guards";
 
 const MAX_OPEN = 15;
 
@@ -34,7 +34,7 @@ export async function createResourceRequest(input: unknown): Promise<ActionResul
 
   const settings = await getSetting("resources");
   if (!settings.allow_requests) return { ok: false, error: "Resource requests are currently turned off." };
-  if (!rateLimit(`request:${user.id}`, 10, 60 * 60 * 1000)) {
+  if (!(await rateLimitDb(`request:${user.id}`, 10, 60 * 60 * 1000))) {
     return { ok: false, error: "You are sending requests too fast. Please try again later." };
   }
 

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { redirect } from "next/navigation";
+import { safeRedirectPath } from "@/lib/safe-redirect";
 import { createServerClient } from "@/lib/supabase/server";
 
 /**
@@ -18,12 +19,11 @@ export async function GET(request: Request) {
     const supabase = await createServerClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (error) {
-      console.error("[auth callback] exchange failed", error);
+      console.error("[auth callback] exchange failed", error.message);
       redirect("/login");
     }
   }
 
   // Validate and redirect to a safe URL
-  const target = next && next.startsWith("/") && !next.startsWith("//") ? next : "/dashboard";
-  redirect(target);
+  redirect(safeRedirectPath(next));
 }

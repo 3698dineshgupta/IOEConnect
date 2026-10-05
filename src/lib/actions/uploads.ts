@@ -16,7 +16,7 @@ import {
   NOT_SIGNED_IN,
   getAdminProfile,
   isUuid,
-  rateLimit,
+  rateLimitDb,
 } from "@/components/community/guards";
 
 const BUCKET = "student-uploads";
@@ -60,7 +60,7 @@ export async function submitStudentUpload(input: unknown): Promise<ActionResult<
     await cleanup();
     return { ok: false, error: "Student uploads are currently turned off." };
   }
-  if (!rateLimit(`upload:${user.id}`, 10, 60 * 60 * 1000)) {
+  if (!(await rateLimitDb(`upload:${user.id}`, 10, 60 * 60 * 1000))) {
     await cleanup();
     return { ok: false, error: "You are uploading too fast. Please try again later." };
   }

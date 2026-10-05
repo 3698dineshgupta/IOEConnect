@@ -1,4 +1,5 @@
-@import "tailwindcss";
+/* Scan only the app source: stray files in the project root must never feed (or break) class detection. */
+@import "tailwindcss" source("../");
 
 @custom-variant dark (&:where(.dark, .dark *));
 

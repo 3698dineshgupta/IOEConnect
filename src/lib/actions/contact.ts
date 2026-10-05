@@ -6,7 +6,7 @@ import { logAudit } from "@/lib/audit";
 import { createServerClient } from "@/lib/supabase/server";
 import { CONTACT_STATUSES } from "@/lib/types";
 import type { ActionResult } from "@/components/community/common";
-import { GENERIC_ERROR, NOT_ALLOWED, clientIp, getAdminProfile, isUuid, rateLimit } from "@/components/community/guards";
+import { GENERIC_ERROR, NOT_ALLOWED, clientIp, getAdminProfile, isUuid, rateLimitDb } from "@/components/community/guards";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Please enter your name.").max(200, "Name is too long."),
@@ -29,10 +29,12 @@ export async function submitContactMessage(input: unknown): Promise<ActionResult
   if (d.website.trim() !== "") return { ok: true };
 
   const ip = await clientIp();
-  if (
-    !rateLimit(`contact:ip:${ip}`, 5, 60 * 60 * 1000) ||
-    !rateLimit(`contact:email:${d.email.toLowerCase()}`, 3, 60 * 60 * 1000)
-  ) {
+  // Both counters are always charged (no short-circuit), so neither can be probed for free.
+  const [ipOk, emailOk] = await Promise.all([
+    rateLimitDb(`contact:ip:${ip}`, 5, 60 * 60 * 1000),
+    rateLimitDb(`contact:email:${d.email.toLowerCase()}`, 3, 60 * 60 * 1000),
+  ]);
+  if (!ipOk || !emailOk) {
     return { ok: false, error: "You have sent several messages recently. Please try again later." };
   }
 

@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 import { getSessionUser } from "@/lib/auth";
+import { isSameOrigin } from "@/lib/pdf-http";
+import { rateLimitDb } from "@/components/community/guards";
 import { getSetting } from "@/lib/settings";
 import { calcSemester, evaluateSubject, normalizeBands, round2, type SubjectInput } from "@/lib/scgpa";
 import { createServerClient } from "@/lib/supabase/server";
@@ -42,8 +44,13 @@ const SaveSchema = z.object({
  * Semesters sent with no subjects are cleared. RLS (scgpa_saves_own) scopes rows to the user.
  */
 export async function POST(request: Request) {
+  // CSRF: a cross-site page must not be able to overwrite someone's saved marks.
+  if (!isSameOrigin(request)) return Response.json({ message: "Cross-site request rejected." }, { status: 403 });
   const user = await getSessionUser();
   if (!user) return Response.json({ message: "Log in to save your marks." }, { status: 401 });
+  if (!(await rateLimitDb(`scgpa-save:${user.id}`, 30, 10 * 60 * 1000))) {
+    return Response.json({ message: "You're saving too often. Please wait a moment." }, { status: 429, headers: { "Retry-After": "60" } });
+  }
 
   let body: unknown;
   try {
