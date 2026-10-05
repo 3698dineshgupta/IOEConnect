@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { RegisterForm, type ProgramOption } from "@/components/auth/register-form";
 import { createServerClient } from "@/lib/supabase/server";
 
-export const metadata: Metadata = { title: "Create account" };
+export const metadata: Metadata = { title: "Create account", robots: { index: false, follow: true } };
 
 async function loadPrograms(): Promise<ProgramOption[]> {
   try {

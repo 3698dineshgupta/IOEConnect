@@ -44,6 +44,30 @@ function contentSecurityPolicy(): string {
   return directives.join("; ");
 }
 
+/**
+ * Duplicate-content guard. Once NEXT_PUBLIC_SITE_URL points at the real domain (e.g. https://www.ioeconnect.com),
+ * the project's own *.vercel.app production hostname 308-redirects there, so only one host is indexed.
+ * Preview deployments (other hostnames) are not touched. With the env var unset or still on vercel.app, nothing redirects.
+ */
+function canonicalHostRedirects() {
+  try {
+    const target = process.env.NEXT_PUBLIC_SITE_URL ? new URL(process.env.NEXT_PUBLIC_SITE_URL) : null;
+    // The project's own production hostname on vercel.app (override with LEGACY_VERCEL_HOST if it ever changes).
+    const vercelHost = process.env.LEGACY_VERCEL_HOST || "ioeconnect.vercel.app";
+    if (!target || target.host === vercelHost || target.hostname.endsWith(".vercel.app")) return [];
+    return [
+      {
+        source: "/:path*",
+        has: [{ type: "host" as const, value: vercelHost }],
+        destination: `${target.origin}/:path*`,
+        permanent: true,
+      },
+    ];
+  } catch {
+    return [];
+  }
+}
+
 const securityHeaders = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy() },
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -62,6 +86,9 @@ const nextConfig: NextConfig = {
     // The proxy (formerly middleware) buffers request bodies; the admin PDF
     // upload route needs more than the 10 MB default.
     proxyClientMaxBodySize: "60mb",
+  },
+  async redirects() {
+    return canonicalHostRedirects();
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

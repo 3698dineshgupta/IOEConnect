@@ -16,7 +16,7 @@ import { RequestTracker } from "@/components/community/RequestTracker";
 import { CancelRequestButton } from "@/components/community/WithdrawButtons";
 import { FormMessage } from "@/components/community/FormMessage";
 
-export const metadata: Metadata = { title: "My requests | IOE Connect", robots: { index: false } };
+export const metadata: Metadata = { title: "My requests", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 interface Row {

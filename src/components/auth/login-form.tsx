@@ -52,7 +52,7 @@ export function LoginForm() {
   return (
     <Card className="ring-gradient rounded-2xl p-1 shadow-lg sm:p-2">
       <CardHeader className="pb-4">
-        <CardTitle className="text-3xl font-extrabold tracking-[-0.03em]">Welcome back</CardTitle>
+        <CardTitle as="h1" className="text-3xl font-extrabold tracking-[-0.03em]">Welcome back</CardTitle>
         <CardDescription>Log in to open your dashboard and premium resources.</CardDescription>
       </CardHeader>
       <CardContent>

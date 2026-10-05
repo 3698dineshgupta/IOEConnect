@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { PublicShell } from "@/components/layout/public-shell";
 import { getShellUser } from "@/components/community/shell-user";
 import Calculator from "@/components/calculator/Calculator";
+import { JsonLd } from "@/components/seo/json-ld";
+import { siteUrl } from "@/lib/utils";
 import { getProfile, getSessionUser } from "@/lib/auth";
 import { getSetting } from "@/lib/settings";
 import { normalizeBands } from "@/lib/scgpa";
@@ -10,9 +12,10 @@ import { loadCalculatorProgram, parseSavedSubjects } from "./data";
 import type { SavedSemester } from "@/components/calculator/types";
 
 export const metadata: Metadata = {
-  title: "SCGPA Calculator | IOE Connect",
+  title: "IOE SGPA & CGPA Calculator",
   description:
-    "Enter your marks for each IOE semester to see grades, SGPA and CGPA, then download an IOE Connect gradesheet. Unofficial calculator.",
+    "Free IOE SGPA and CGPA calculator: enter Theory, Internal and Practical marks; the 20% internal rule and 40% pass mark are applied. Unofficial.",
+  alternates: { canonical: "/calculator" },
 };
 export const dynamic = "force-dynamic";
 
@@ -53,6 +56,20 @@ export default async function CalculatorPage() {
 
   return (
     <PublicShell user={shellUser}>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          name: "IOE SGPA & CGPA Calculator",
+          url: siteUrl("/calculator"),
+          applicationCategory: "EducationalApplication",
+          operatingSystem: "Any (web browser)",
+          inLanguage: "en",
+          description: "Calculates IOE SGPA and CGPA from Theory, Internal and Practical marks using the 2080/81 grading scale.",
+          offers: { "@type": "Offer", price: "0", priceCurrency: "NPR" },
+          publisher: { "@id": siteUrl("/#organization") },
+        }}
+      />
       <Calculator
         program={program.program}
         semesters={program.semesters}

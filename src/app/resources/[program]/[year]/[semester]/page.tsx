@@ -6,6 +6,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { EmptyState, buttonVariants } from "@/components/ui";
 import { getProfile } from "@/lib/auth";
 import { getProgramTree, getSemester } from "@/lib/curriculum";
+import { programCode, programPlainName, trimTo } from "@/lib/seo";
 import { getResourcesBySubject } from "@/components/resources/data";
 import { ResourceFilters, parseFilterAccess, parseFilterType } from "@/components/resources/filters";
 import { parseSlugNumber, semesterHref, shellUser, summarizeResources, toRoman, yearSlug } from "@/components/resources/format";
@@ -28,12 +29,16 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
   const ctx = await load(await params);
   if (!ctx) return { title: "Semester not found", robots: { index: false } };
   const sem = toRoman(ctx.semester.number);
+  const plain = programPlainName(ctx.program.name);
   return {
-    title: `${ctx.program.name} Semester ${sem} Notes & PYQs`,
-    description: `${ctx.program.name} semester ${sem} subjects: ${ctx.subjects
-      .slice(0, 6)
-      .map((s) => s.name)
-      .join(", ")}. Notes, past questions and syllabus.`,
+    title: `IOE ${programCode(ctx.program)} Semester ${sem} Notes & PYQs`,
+    description: trimTo(
+      `IOE ${plain} semester ${sem} subjects: ${ctx.subjects
+        .slice(0, 5)
+        .map((s) => s.name)
+        .join(", ")}. Notes, past questions and syllabus.`,
+      155,
+    ),
     alternates: { canonical: `/resources/${ctx.program.slug}/${yearSlug(ctx.year.number)}/semester-${ctx.semester.number}` },
   };
 }

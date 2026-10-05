@@ -7,6 +7,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { EmptyState, buttonVariants } from "@/components/ui";
 import { getProfile } from "@/lib/auth";
 import { getProgramTree } from "@/lib/curriculum";
+import { OG_IMAGES, programCode, programPlainName, trimTo } from "@/lib/seo";
 import { createServerClient } from "@/lib/supabase/server";
 import type { PublicResourceView } from "@/lib/types";
 import { getResourcesBySubject } from "@/components/resources/data";
@@ -38,10 +39,16 @@ export async function generateMetadata({ params }: Pick<Props, "params">): Promi
   const { program } = await params;
   const tree = await getProgramTree(program);
   if (!tree) return { title: "Program not found", robots: { index: false } };
+  const plain = programPlainName(tree.name);
+  const description = trimTo(
+    `IOE ${plain} (${programCode(tree)}) notes, syllabus and past questions for all ${tree.years.reduce((n, y) => n + y.semesters.length, 0) || 8} semesters, organised by year and subject.`,
+    155,
+  );
   return {
-    title: `${tree.name} Notes & PYQs by Year and Semester`,
-    description: `All ${tree.name} notes, past year questions and syllabus for IOE, organised by year and semester.`,
+    title: `IOE ${programCode(tree)} Notes, Syllabus & PYQs (All Semesters)`,
+    description,
     alternates: { canonical: `/resources/${tree.slug}` },
+    openGraph: { type: "website", siteName: "IOE Connect", title: `IOE ${plain} Notes, Syllabus & PYQs`, description, url: `/resources/${tree.slug}`, images: OG_IMAGES },
   };
 }
 

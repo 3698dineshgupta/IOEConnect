@@ -9,12 +9,25 @@ const mono = Geist_Mono({ variable: "--font-mono-var", subsets: ["latin"], displ
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+const description =
+  "IOE notes, syllabus and past questions for Tribhuvan University engineering students, organised by program, year and semester. Free SCGPA calculator.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "IOE Connect - Notes, PYQs and resources for IOE", template: "%s | IOE Connect" },
-  description:
-    "Notes, previous year questions and study resources for IOE students, organised by program, year and semester.",
-  openGraph: { title: "IOE Connect", description: "Everything you need for IOE, in one place.", type: "website", images: ["/logo.png"] },
+  applicationName: "IOE Connect",
+  title: { default: "IOE Notes, Syllabus & PYQs for BE Students | IOE Connect", template: "%s | IOE Connect" },
+  description,
+  category: "education",
+  // Every page is its own canonical (query strings dropped); pages with a different rule override this.
+  alternates: { canonical: "./" },
+  openGraph: { type: "website", siteName: "IOE Connect", locale: "en_US", title: "IOE Connect - IOE notes, syllabus and PYQs", description },
+  twitter: { card: "summary_large_image", title: "IOE Connect - IOE notes, syllabus and PYQs", description },
+  robots: { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } },
+  // Search Console / Bing verification tokens come from env (they are public meta tags, not secrets).
+  verification: {
+    google: process.env.GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.BING_SITE_VERIFICATION ? { "msvalidate.01": process.env.BING_SITE_VERIFICATION } : undefined,
+  },
 };
 
 export const viewport: Viewport = {

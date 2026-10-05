@@ -5,12 +5,15 @@ import { siteUrl } from "@/lib/utils";
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
+  // lastModified must reflect real changes: static pages carry the date their content last changed,
+  // curriculum pages use the database's updated_at below. (Bump STATIC_UPDATED when those pages change.)
+  const now = new Date("2026-10-05");
   const entries: MetadataRoute.Sitemap = [
     { url: siteUrl("/"), lastModified: now, changeFrequency: "weekly", priority: 1 },
     { url: siteUrl("/resources"), lastModified: now, changeFrequency: "daily", priority: 0.9 },
-    { url: siteUrl("/premium"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
-    { url: siteUrl("/calculator"), lastModified: now, changeFrequency: "monthly", priority: 0.6 },
+    { url: siteUrl("/calculator"), lastModified: now, changeFrequency: "monthly", priority: 0.7 },
+    { url: siteUrl("/faq"), lastModified: now, changeFrequency: "monthly", priority: 0.5 },
+    { url: siteUrl("/premium"), lastModified: now, changeFrequency: "monthly", priority: 0.5 },
     { url: siteUrl("/about"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: siteUrl("/contact"), lastModified: now, changeFrequency: "yearly", priority: 0.3 },
     { url: siteUrl("/privacy"), lastModified: now, changeFrequency: "yearly", priority: 0.2 },

@@ -163,7 +163,7 @@ export function SubjectGrid({
     electiveGroups.set(key, [...(electiveGroups.get(key) ?? []), s]);
   }
   const card = (s: Subject) => (
-    <StaggerItem as="li" key={s.id} className="h-full">
+    <StaggerItem as="li" key={s.id} className="h-full [contain-intrinsic-size:auto_300px] [content-visibility:auto]">
       <SubjectCard subject={s} resources={resourcesBySubject.get(s.id) ?? []} number={order.get(s.id)} semesterNumber={semesterNumber} />
     </StaggerItem>
   );
@@ -185,7 +185,7 @@ export function SubjectGrid({
             <h3 id={`electives-${semesterNumber ?? 0}-${i}`} className="text-lg font-extrabold tracking-[-0.02em]">
               {group || "Elective"}
             </h3>
-            <span className="rounded-full bg-[color-mix(in_srgb,var(--violet)_14%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-violet ring-1 ring-inset ring-violet/25">
+            <span className="rounded-full bg-[color-mix(in_srgb,var(--violet)_14%,transparent)] px-2.5 py-0.5 text-xs font-semibold text-[color-mix(in_srgb,var(--violet)_72%,black)] dark:text-violet ring-1 ring-inset ring-violet/25">
               Choose one
             </span>
             <span className="text-sm text-muted-foreground">{items.length} options</span>

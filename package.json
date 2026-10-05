@@ -10,7 +10,8 @@
     "postinstall": "node scripts/copy-pdfjs-assets.mjs",
     "predev": "node scripts/copy-pdfjs-assets.mjs",
     "prebuild": "node scripts/copy-pdfjs-assets.mjs",
-    "test:security": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"tests/security/*.test.*\""
+    "test:security": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test \"tests/security/*.test.*\"",
+    "test:seo": "node --test \"tests/seo/*.test.*\""
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

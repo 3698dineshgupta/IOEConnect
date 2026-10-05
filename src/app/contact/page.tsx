@@ -9,7 +9,8 @@ import { ContactForm } from "@/components/community/ContactForm";
 import { getShellUser } from "@/components/community/shell-user";
 
 export const metadata: Metadata = {
-  title: "Contact | IOE Connect",
+  title: "Contact the IOE Connect Team",
+  alternates: { canonical: "/contact" },
   description: "Get in touch with the IOE Connect team: questions, feedback, partnerships and merchandise orders.",
 };
 export const dynamic = "force-dynamic";

@@ -7,7 +7,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion";
 import { SubjectIcon } from "@/components/scene";
 import { buttonVariants } from "@/components/ui";
 import { getProfile } from "@/lib/auth";
-import { getSubjectBySlug, getSubjectResources } from "@/lib/curriculum";
+import { getSemester, getSharedSubjects, getSubjectBySlug, getSubjectResources } from "@/lib/curriculum";
 import { getSetting } from "@/lib/settings";
 import { cn } from "@/lib/utils";
 import { semesterHref, shellUser, summarizeResources, toRoman, yearRange, yearSlug } from "@/components/resources/format";
@@ -15,11 +15,11 @@ import { Breadcrumbs, BrowseContainer, SectionHeading } from "@/components/resou
 import { subjectFacts } from "@/components/resources/subject-card";
 import { RememberSubject } from "@/components/resources/RememberSubject";
 import { scopeProfileToSubject } from "@/lib/program-premium";
+import { OG_IMAGES, programCode, programPlainName, trimTo } from "@/lib/seo";
 import { BundleTile, PyqCollection, SectionEmpty, SyllabusCard, type AccessContext } from "@/components/resources/subject-sections";
 
 type Props = { params: Promise<{ subject: string }> };
 
-const subjectTitle = (name: string) => `${/^ioe\b/i.test(name) ? "" : "IOE "}${name} Notes & PYQs`;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { subject: slug } = await params;
@@ -28,16 +28,34 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resources = await getSubjectResources(subject.id);
   const s = summarizeResources(resources);
   const range = yearRange(s.years);
-  const description = `${subject.name} (${subject.program.name}, Semester ${toRoman(subject.semester.number)}): ${
-    s.notesDocs.length ? "notes" : "resources"
-  }${range ? ` and past year questions ${range}` : s.pyq.length ? " and past questions" : ""}${s.syllabus.length ? ", official syllabus" : ""} for IOE students.`;
-  const title = subjectTitle(subject.name);
+  // The same course exists in several programs, so the program and semester make every title unique.
+  const code = programCode(subject.program);
+  const sem = toRoman(subject.semester.number);
+  // Keep the whole <title> (with " | IOE Connect") near 60 characters, dropping words from the end first.
+  const ladder = [
+    `${subject.name} Notes & PYQs - ${code} Sem ${sem}`,
+    `${subject.name} Notes - ${code} Sem ${sem}`,
+    `${subject.name} - ${code} Sem ${sem}`,
+  ];
+  // Never trim the program/semester suffix: it is what keeps the same course in different programs distinct.
+  const suffix = ` - ${code} Sem ${sem}`;
+  const core = ladder.find((t) => t.length <= 46) ?? `${trimTo(subject.name, Math.max(16, 46 - suffix.length))}${suffix}`;
+  const have = [
+    s.notesDocs.length ? `${s.notesDocs.length} note${s.notesDocs.length > 1 ? "s" : ""}` : null,
+    range ? `past questions ${range}` : s.pyq.length ? "past questions" : null,
+    s.syllabus.length ? "the official syllabus" : null,
+  ].filter(Boolean) as string[];
+  const description = trimTo(
+    `${subject.name} for IOE ${programPlainName(subject.program.name)}, semester ${sem}: ${have.length ? have.join(", ") : "study resources"} on IOE Connect.`,
+    155,
+  );
+  const url = `/subject/${subject.slug}`;
   return {
-    title,
+    title: core,
     description,
-    alternates: { canonical: `/subject/${subject.slug}` },
-    openGraph: { title: `${title} | IOE Connect`, description, type: "article", url: `/subject/${subject.slug}` },
-    twitter: { card: "summary", title: `${title} | IOE Connect`, description },
+    alternates: { canonical: url },
+    openGraph: { type: "website", siteName: "IOE Connect", title: `${core} | IOE Connect`, description, url, images: OG_IMAGES },
+    twitter: { card: "summary_large_image", title: `${core} | IOE Connect`, description },
   };
 }
 
@@ -62,6 +80,17 @@ export default async function SubjectPage({ params }: Props) {
     { id: "pyq", label: "PYQs", count: s.pyq.length },
     ...(s.other.length ? [{ id: "other", label: "Other", count: s.other.length }] : []),
   ];
+
+  // Context + internal links: what this course is, where it sits, the same course in other programs, its semester mates.
+  const [mates, semCtx] = await Promise.all([
+    getSharedSubjects(subject.id),
+    getSemester(subject.program.slug, subject.year.number, subject.semester.number),
+  ]);
+  const otherPrograms = (
+    await Promise.all(mates.filter((m) => m.slug !== subject.slug).map((m) => getSubjectBySlug(m.slug)))
+  ).filter((x): x is NonNullable<typeof x> => !!x);
+  const semesterMates = (semCtx?.subjects ?? []).filter((x) => x.slug !== subject.slug).slice(0, 12);
+  const code = programCode(subject.program);
 
   const factPills = [
     subject.code ? { k: "Code", v: subject.code, mono: true } : null,
@@ -250,6 +279,67 @@ export default async function SubjectPage({ params }: Props) {
             </div>
           </section>
         </div>
+
+        {/* ------------------------------------------------ about + related (crawlable context and links) */}
+        <section aria-labelledby="about-subject-h" className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+          <div>
+            <h2 id="about-subject-h" className="text-xl font-extrabold tracking-[-0.02em]">
+              About {subject.name} in IOE {code}
+            </h2>
+            <div className="mt-3 space-y-3 text-[0.9375rem] leading-relaxed text-muted-foreground">
+              <p>
+                {subject.name}
+                {subject.code ? ` (${subject.code})` : ""} is {subject.is_elective ? "an elective" : "a core"} subject in semester {sem} (year{" "}
+                {toRoman(subject.year.number)}) of the {programPlainName(subject.program.name)} program at the Institute of Engineering.
+                {facts.marks ? ` It carries ${facts.marks} marks` : ""}
+                {facts.ltp ? `${facts.marks ? ", with" : " It has"} a weekly load of ${facts.ltp} (lecture-tutorial-practical)` : ""}
+                {facts.marks || facts.ltp ? "." : ""}
+              </p>
+              <p>
+                {s.syllabus.length ? "The official syllabus PDF is available. " : "The official syllabus has not been added yet. "}
+                {s.notesDocs.length ? `There ${s.notesDocs.length === 1 ? "is 1 set" : `are ${s.notesDocs.length} sets`} of notes. ` : "Notes are not available yet. "}
+                {s.pyq.length ? `Past questions are available${range ? ` for ${range}` : ""}.` : "Past questions are not available yet."}{" "}
+                Documents open in a secure online viewer; premium members of this program can also download them.
+              </p>
+              <p>
+                Use the <Link href="/calculator" className="link-underline font-medium text-primary">SCGPA calculator</Link> to turn your marks in this
+                subject into a grade and SGPA.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-6">
+            {otherPrograms.length > 0 && (
+              <nav aria-label="Same course in other programs">
+                <h3 className="text-sm font-bold">Same course in other IOE programs</h3>
+                <ul className="mt-2 space-y-1.5 text-sm">
+                  {otherPrograms.map((o) => (
+                    <li key={o.slug}>
+                      <Link href={`/subject/${o.slug}`} className="link-underline font-medium text-primary">
+                        {o.name} ({programCode(o.program)}, semester {toRoman(o.semester.number)})
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
+            {semesterMates.length > 0 && (
+              <nav aria-label={`Other subjects in semester ${sem}`}>
+                <h3 className="text-sm font-bold">
+                  More {code} semester {sem} subjects
+                </h3>
+                <ul className="mt-2 space-y-1.5 text-sm">
+                  {semesterMates.map((m) => (
+                    <li key={m.slug}>
+                      <Link href={`/subject/${m.slug}`} className="link-underline text-primary">
+                        {m.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
+          </div>
+        </section>
       </BrowseContainer>
     </PublicShell>
   );

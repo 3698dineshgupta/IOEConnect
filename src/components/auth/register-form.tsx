@@ -96,7 +96,7 @@ export function RegisterForm({ programs = [], initialReferral = "" }: { programs
   return (
     <Card className="ring-gradient rounded-2xl p-1 shadow-lg sm:p-2">
       <CardHeader className="pb-4">
-        <CardTitle className="text-3xl font-extrabold tracking-[-0.03em]">Create your account</CardTitle>
+        <CardTitle as="h1" className="text-3xl font-extrabold tracking-[-0.03em]">Create your account</CardTitle>
         <CardDescription>Free access to notes and PYQs, matched to your semester.</CardDescription>
       </CardHeader>
       <CardContent>

@@ -1,138 +1,153 @@
-import { Metadata } from 'next';
-import Link from 'next/link';
+import type { Metadata } from "next";
+import Link from "next/link";
+import { BookOpenText, Calculator, Library, Users } from "lucide-react";
+import { PublicShell } from "@/components/layout/public-shell";
+import { JsonLd } from "@/components/seo/json-ld";
+import { toShellUser } from "@/lib/actions/premium";
+import { getProfile, getSessionUser } from "@/lib/auth";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: 'About IOE Connect',
-  description: 'Learn about IOE Connect - a platform for IOE students to access resources and tools',
+  title: "About IOE Connect: IOE Notes & Study Resources",
+  description: "IOE Connect is an independent study platform with IOE notes, syllabus and past questions organised by program, year and semester.",
+  alternates: { canonical: "/about" },
 };
 
-export default function AboutPage() {
+const offers = [
+  {
+    icon: Library,
+    title: "Resource library",
+    text: "Syllabus PDFs, notes and past question papers organised by program, year, semester and subject.",
+    href: "/resources",
+    cta: "Browse resources",
+  },
+  {
+    icon: Calculator,
+    title: "SCGPA calculator",
+    text: "Enter your Theory, Internal and Practical marks; we apply the IOE rules and work out your SGPA and CGPA.",
+    href: "/calculator",
+    cta: "Open the calculator",
+  },
+  {
+    icon: BookOpenText,
+    title: "Curriculum at a glance",
+    text: "Browse each program's subjects with credits, marks and free or premium status, to plan your semesters.",
+    href: "/resources",
+    cta: "See programs",
+  },
+  {
+    icon: Users,
+    title: "Community contributions",
+    text: "Share notes with other students and request material that is missing. Uploads are reviewed before publishing.",
+    href: "/my-uploads",
+    cta: "Contribute notes",
+  },
+];
+
+const values = [
+  ["Accessibility", "Good study material should be easy for every student to reach."],
+  ["Community", "Students learn more when they share what they know."],
+  ["Quality", "Uploads are reviewed, and files are checked before they are published."],
+  ["Transparency", "We say what we are, where material comes from, and how premium works."],
+];
+
+export default async function AboutPage() {
+  const [user, profile] = await Promise.all([getSessionUser(), getProfile()]);
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            About IOE Connect
-          </h1>
-          <p className="text-lg text-slate-300">
-            Empowering engineering students with resources, tools, and community
+    <PublicShell user={toShellUser(profile, user)}>
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "About" }])} />
+      <div className="mx-auto w-full max-w-4xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
+        <header className="max-w-2xl">
+          <p className="text-sm font-semibold text-primary">About</p>
+          <h1 className="mt-2 text-4xl font-extrabold tracking-[-0.03em] sm:text-5xl">About IOE Connect</h1>
+          <p className="mt-3 text-lg text-muted-foreground">
+            IOE notes, syllabus and past questions for engineering students, in one organised place.
           </p>
-        </div>
+        </header>
 
-        {/* Mission */}
-        <div className="bg-slate-800 rounded-lg p-8 mb-8 border border-slate-700">
-          <h2 className="text-2xl font-bold text-white mb-4">Our Mission</h2>
-          <p className="text-slate-300 leading-relaxed">
-            IOE Connect is dedicated to supporting students pursuing the IOE
-            (Institute of Engineering) curriculum. We provide a centralized platform
-            for accessing high-quality study resources, tools for academic planning,
-            and a community of peers working towards the same goals.
+        <section aria-labelledby="mission-h" className="mt-10 rounded-2xl border border-border bg-card p-6 sm:p-8">
+          <h2 id="mission-h" className="text-2xl font-bold tracking-[-0.02em]">
+            Our mission
+          </h2>
+          <p className="mt-3 leading-relaxed text-muted-foreground">
+            IOE Connect supports students of the Institute of Engineering (IOE), Tribhuvan University. We bring the syllabus, notes and past
+            question papers of each program together by year, semester and subject, so you spend your time studying instead of searching.
           </p>
-        </div>
+        </section>
 
-        {/* What We Offer */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">What We Offer</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[
-              {
-                title: 'Resource Library',
-                description:
-                  'Comprehensive collection of notes, past question papers, reference materials, and more organized by semester and subject.',
-              },
-              {
-                title: 'GPA Calculator',
-                description:
-                  'Accurately calculate your SGPA and CGPA with our user-friendly calculator supporting all grading schemes.',
-              },
-              {
-                title: 'Curriculum Access',
-                description:
-                  'Browse the complete IOE curriculum with subject details, helping you plan your academic journey.',
-              },
-              {
-                title: 'Community Support',
-                description:
-                  'Connect with fellow students, share resources, and request materials for subjects.',
-              },
-            ].map((item, idx) => (
-              <div
-                key={idx}
-                className="bg-slate-800 rounded-lg p-6 border border-slate-700 hover:border-blue-500 transition-colors"
-              >
-                <h3 className="text-lg font-semibold text-white mb-2">
-                  {item.title}
-                </h3>
-                <p className="text-slate-400">{item.description}</p>
-              </div>
+        <section aria-labelledby="offer-h" className="mt-12">
+          <h2 id="offer-h" className="text-2xl font-bold tracking-[-0.02em]">
+            What you can do here
+          </h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {offers.map(({ icon: Icon, title, text, href, cta }) => (
+              <li key={title} className="card-lift flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm">
+                <span className="grid size-10 place-items-center rounded-xl bg-primary-soft text-primary">
+                  <Icon aria-hidden className="size-5" />
+                </span>
+                <h3 className="mt-3 text-lg font-semibold">{title}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{text}</p>
+                <Link href={href} className="mt-3 inline-flex min-h-10 items-center text-sm font-semibold text-primary hover:underline">
+                  {cta}
+                </Link>
+              </li>
             ))}
+          </ul>
+        </section>
+
+        <section aria-labelledby="who-h" className="mt-12 rounded-2xl border border-border bg-card p-6 sm:p-8">
+          <h2 id="who-h" className="text-2xl font-bold tracking-[-0.02em]">
+            Who we are, and what we are not
+          </h2>
+          <div className="mt-3 space-y-3 leading-relaxed text-muted-foreground">
+            <p>
+              IOE Connect is an independent project built by students who know how scattered IOE material can be. We are{" "}
+              <strong className="font-semibold text-foreground">not affiliated with, or endorsed by, Tribhuvan University or the Institute of Engineering</strong>.
+            </p>
+            <p>
+              Syllabus and past question files are the university&rsquo;s published documents. Notes come from students, teachers and public
+              sources and may contain mistakes, so always check them against your official syllabus and your teachers.
+            </p>
+            <p>
+              If you own something we have published and want it removed, or you spot an error, tell us through the{" "}
+              <Link href="/contact" className="link-underline font-medium text-primary">
+                contact page
+              </Link>
+              . Our{" "}
+              <Link href="/terms" className="link-underline font-medium text-primary">
+                Terms
+              </Link>{" "}
+              and{" "}
+              <Link href="/privacy" className="link-underline font-medium text-primary">
+                Privacy Policy
+              </Link>{" "}
+              explain how the service works and how we handle your data.
+            </p>
           </div>
-        </div>
+        </section>
 
-        {/* Who We Are */}
-        <div className="bg-slate-800 rounded-lg p-8 mb-8 border border-slate-700">
-          <h2 className="text-2xl font-bold text-white mb-4">Who We Are</h2>
-          <p className="text-slate-300 leading-relaxed mb-4">
-            IOE Connect is built by engineering students and professionals who
-            understand the challenges of the IOE curriculum. We&apos;re committed to
-            creating a platform that genuinely helps students succeed.
-          </p>
-          <p className="text-slate-300 leading-relaxed">
-            Whether you&apos;re just starting your first semester or in your final year,
-            IOE Connect is designed to support you every step of the way.
-          </p>
-        </div>
-
-        {/* Values */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-white mb-6">Our Values</h2>
-          <div className="space-y-4">
-            {[
-              {
-                title: 'Accessibility',
-                description: 'Quality resources should be available to all students',
-              },
-              {
-                title: 'Community',
-                description: 'Strong communities of learners achieve more together',
-              },
-              {
-                title: 'Excellence',
-                description: 'We strive for high-quality content and tools',
-              },
-              {
-                title: 'Transparency',
-                description: 'We are open about what we do and how we operate',
-              },
-            ].map((value, idx) => (
-              <div key={idx} className="flex gap-4">
-                <div className="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold">✓</span>
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white">{value.title}</h3>
-                  <p className="text-slate-400">{value.description}</p>
-                </div>
-              </div>
+        <section aria-labelledby="values-h" className="mt-12">
+          <h2 id="values-h" className="text-2xl font-bold tracking-[-0.02em]">
+            What we value
+          </h2>
+          <ul className="mt-6 grid gap-4 sm:grid-cols-2">
+            {values.map(([title, text]) => (
+              <li key={title} className="rounded-2xl border border-border bg-card p-5">
+                <h3 className="font-semibold">{title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+        </section>
 
-        {/* Call to Action */}
-        <div className="bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg p-8 text-center border border-blue-700">
-          <h2 className="text-2xl font-bold text-white mb-4">Get Started Today</h2>
-          <p className="text-blue-200 mb-6">
-            Browse notes and past year questions for your semester.
-          </p>
-          <Link
-            href="/resources"
-            className="inline-block px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            Explore Resources
+        <div className="mt-12 rounded-2xl border border-border bg-card p-6 text-center sm:p-8">
+          <h2 className="text-2xl font-bold tracking-[-0.02em]">Start with your semester</h2>
+          <p className="mt-2 text-muted-foreground">Find the notes, past questions and syllabus for your program.</p>
+          <Link href="/resources" className="mt-5 inline-flex min-h-11 items-center rounded-xl bg-primary px-7 text-sm font-semibold text-primary-foreground hover:opacity-90">
+            Explore IOE resources
           </Link>
         </div>
       </div>
-    </main>
+    </PublicShell>
   );
 }

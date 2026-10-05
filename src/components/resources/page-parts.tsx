@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { CountUp } from "@/components/motion";
 import { cn, formatDate } from "@/lib/utils";
 import { RESOURCE_TYPE_LABELS, type PublicResourceView, type ResourceType } from "@/lib/types";
+import { JsonLd } from "@/components/seo/json-ld";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import { yearRange } from "./format";
 
 export function Container({ className, children }: { className?: string; children: React.ReactNode }) {
@@ -23,6 +25,7 @@ export function Breadcrumbs({ items }: { items: Array<{ label: string; href?: st
   const collapsed = hideTo >= hideFrom;
   return (
     <nav aria-label="Breadcrumb" className="mb-6 min-w-0">
+      <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, ...items.map((it) => ({ name: it.label, path: it.href }))])} />
       <ol className="flex flex-wrap items-center gap-x-1.5 text-[13px] text-muted-foreground">
         {items.map((it, i) => {
           const hidden = collapsed && i >= hideFrom && i <= hideTo;

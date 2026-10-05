@@ -15,7 +15,7 @@ import { UploadForm } from "@/components/community/UploadForm";
 import { WithdrawUploadButton } from "@/components/community/WithdrawButtons";
 import { FormMessage } from "@/components/community/FormMessage";
 
-export const metadata: Metadata = { title: "My uploads | IOE Connect", robots: { index: false } };
+export const metadata: Metadata = { title: "My uploads", robots: { index: false } };
 export const dynamic = "force-dynamic";
 
 interface Row {

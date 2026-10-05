@@ -106,7 +106,7 @@ export function ResetForm() {
   return (
     <Card className="ring-gradient rounded-2xl p-1 shadow-lg sm:p-2">
       <CardHeader className="pb-4">
-        <CardTitle className="text-3xl font-extrabold tracking-[-0.03em]">{mode === "update" ? "Set a new password" : "Reset your password"}</CardTitle>
+        <CardTitle as="h1" className="text-3xl font-extrabold tracking-[-0.03em]">{mode === "update" ? "Set a new password" : "Reset your password"}</CardTitle>
         <CardDescription>
           {mode === "update" ? "Choose a password you have not used elsewhere." : "Enter your email and we will send you a reset link."}
         </CardDescription>

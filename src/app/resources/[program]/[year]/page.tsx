@@ -6,6 +6,7 @@ import { PublicShell } from "@/components/layout/public-shell";
 import { EmptyState } from "@/components/ui";
 import { getProfile } from "@/lib/auth";
 import { getProgramTree } from "@/lib/curriculum";
+import { programCode, programPlainName, trimTo } from "@/lib/seo";
 import { getResourcesBySubject } from "@/components/resources/data";
 import { parseSlugNumber, semesterHref, shellUser, summarizeResources, toRoman, yearSlug } from "@/components/resources/format";
 import { Breadcrumbs, BrowseContainer, PageHero, PrevNext, SectionHeading, plural } from "@/components/resources/page-parts";
@@ -24,9 +25,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { program, year } = await params;
   const data = await load(program, year);
   if (!data) return { title: "Year not found", robots: { index: false } };
+  const plain = programPlainName(data.tree.name);
   return {
-    title: `${data.tree.name} Year ${toRoman(data.year.number)} Notes & PYQs`,
-    description: `${data.tree.name} year ${toRoman(data.year.number)} notes, past questions and syllabus by semester.`,
+    title: `IOE ${programCode(data.tree)} Year ${toRoman(data.year.number)} Notes & PYQs`,
+    description: trimTo(`IOE ${plain} year ${toRoman(data.year.number)}: notes, past questions and syllabus for every subject, semester by semester.`, 155),
     alternates: { canonical: `/resources/${data.tree.slug}/year-${data.year.number}` },
   };
 }

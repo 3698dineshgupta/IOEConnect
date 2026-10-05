@@ -67,7 +67,7 @@ export function Logo({
   const cls = cn("inline-flex items-center gap-2", className);
   if (href === null) return <span className={cls}>{inner}</span>;
   return (
-    <Link href={href} className={cn(cls, "min-h-10 rounded-md")} aria-label="IOE Connect home">
+    <Link href={href} className={cn(cls, "min-h-10 rounded-md")} aria-label="ioeconnect home">
       {inner}
     </Link>
   );

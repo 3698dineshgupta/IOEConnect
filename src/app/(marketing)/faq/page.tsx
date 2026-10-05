@@ -1,8 +1,15 @@
-import { Metadata } from 'next';
+import type { Metadata } from "next";
+import Link from "next/link";
+import { PublicShell } from "@/components/layout/public-shell";
+import { JsonLd } from "@/components/seo/json-ld";
+import { toShellUser } from "@/lib/actions/premium";
+import { getProfile, getSessionUser } from "@/lib/auth";
+import { breadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
-  title: 'FAQ | IOE Connect',
-  description: 'Frequently asked questions about IOE Connect',
+  title: "IOE Notes FAQ: Syllabus, PYQs, Premium & SGPA",
+  description: "Answers about IOE Connect: free IOE notes, syllabus and past questions, premium access per program, downloads and the SCGPA calculator.",
+  alternates: { canonical: "/faq" },
 };
 
 interface FAQItem {
@@ -12,119 +19,137 @@ interface FAQItem {
 
 const faqs: FAQItem[] = [
   {
-    question: 'What is IOE Connect?',
+    question: "What is IOE Connect?",
     answer:
-      'IOE Connect is a comprehensive platform designed for students pursuing the IOE (Institute of Engineering) curriculum. It provides access to study resources, tools like the GPA calculator, and community features to support academic success.',
+      "IOE Connect is a study platform for students of the Institute of Engineering (IOE), Tribhuvan University. It organises syllabus PDFs, notes and past year questions by program, year, semester and subject, and includes an SCGPA calculator.",
   },
   {
-    question: 'Is IOE Connect free to use?',
+    question: "Is IOE Connect free to use?",
     answer:
-      'Yes, IOE Connect offers many free features including access to basic resources and the GPA calculator. We also offer premium features with additional benefits for students who want more comprehensive support.',
+      "A large part of the library is free to read with an account, including the first two syllabi of every semester. Premium is optional and unlocks the remaining premium notes and past questions, and downloading and printing, for one program.",
   },
   {
-    question: 'How do I use the SCGPA Calculator?',
+    question: "Which IOE programs and semesters are covered?",
     answer:
-      'Pick a semester and type your Theory, Internal and Practical marks for each subject. The calculator applies the IOE rules (the 20% internal cap and the 40% pass mark in each part), gives each subject a grade, and works out your SGPA and cumulative CGPA. Log in to save your marks.',
+      "Computer, Civil, Electronics and Communication, Electrical and Mechanical engineering, organised by year and semester. Coverage differs by subject, so open the Resources page to see what is available today, or send a resource request for anything missing.",
   },
   {
-    question: 'What grades does the calculator support?',
+    question: "Are these notes official?",
     answer:
-      'It uses the 2080/81 IOE scale: 80%+ A (4.0), 75-79% A- (3.7), 70-74% B+ (3.3), 65-69% B (3.0), 60-64% B- (2.7), 55-59% C+ (2.3), 50-54% C (2.0), 40-49% D (1.0) and below 40% F (0).',
+      "No. IOE Connect is an independent project and is not part of Tribhuvan University or the Institute of Engineering. Notes come from students, teachers and public sources; syllabus and past question files are the university's published documents. Always follow your campus and the official syllabus where they differ.",
   },
   {
-    question: 'How accurate is the GPA calculation?',
+    question: "How do I use the SCGPA calculator?",
     answer:
-      'SGPA = Σ(grade point × credits) ÷ Σ credits, shown to two decimals. The calculator is unofficial, so always check important figures against your official marksheet.',
+      "Pick a semester and type your Theory, Internal and Practical marks for each subject. The calculator applies the IOE rules (the 20% internal cap and the 40% pass mark in each part), gives each subject a grade, and works out your SGPA and cumulative CGPA. Log in to save your marks.",
   },
   {
-    question: 'Can I save my calculator results?',
+    question: "What grading scale does the calculator use?",
     answer:
-      'Yes, if you\'re logged in, you can save your SCGPA calculations. This allows you to track your progress over time and access your saved results from any device.',
+      "The 2080/81 IOE scale: 80%+ A (4.0), 75-79% A- (3.7), 70-74% B+ (3.3), 65-69% B (3.0), 60-64% B- (2.7), 55-59% C+ (2.3), 50-54% C (2.0), 40-49% D (1.0) and below 40% F (0).",
   },
   {
-    question: 'What resources are available on the platform?',
+    question: "How accurate is the GPA calculation?",
     answer:
-      'IOE Connect offers notes, past question papers, reference materials, lab manuals, and more for each subject in the IOE curriculum. Resources are organized by program, year, semester, and subject for easy navigation.',
+      "SGPA = Σ(grade point × credits) ÷ Σ credits, shown to two decimals. The calculator is unofficial, so always check important figures against your official marksheet.",
   },
   {
-    question: 'How can I request specific resources?',
+    question: "Can I download the PDFs?",
     answer:
-      'If you can\'t find a resource you need, you can submit a resource request through the "My Requests" section. Administrators review requests and work to fulfill them based on availability and demand.',
+      "Everyone can read documents online in the secure viewer. Premium members can also download and print the documents of their program; each copy is stamped with the member's email and the date.",
   },
   {
-    question: 'Can I upload my own resources?',
+    question: "How does Premium work?",
     answer:
-      'Yes! We encourage community contribution. You can upload your notes, summaries, and resources through the student uploads feature. All uploads are reviewed before publication to maintain quality.',
+      "Premium is bought per program. Choose your program and a plan, pay with the listed method and upload your payment proof. An admin checks it, usually within 24 hours, and activates Premium for that program. Subjects shared between programs are open to members of any program that shares them.",
   },
   {
-    question: 'Is my information secure?',
-    answer:
-      'We use encrypted connections, hashed passwords, private file storage and access controls, and we do not sell your information. Read the Privacy Policy (link in the footer) for exactly what we collect and who helps us run the site.',
+    question: "Can I save my calculator results?",
+    answer: "Yes. When you are logged in you can save your marks and open them again from any device.",
   },
   {
-    question: 'How do I contact support?',
+    question: "How can I request a missing resource?",
     answer:
-      'You can reach our support team through the Contact page, or email us directly. We typically respond within 24-48 hours. For urgent issues, check the help section for additional resources.',
+      "Use the My Requests page to ask for a subject's notes or past questions. Administrators review requests and add material as it becomes available.",
   },
   {
-    question: 'What is the referral program?',
+    question: "Can I upload my own notes?",
     answer:
-      'Our referral program rewards you for inviting friends to IOE Connect. When a referred friend takes a premium subscription, you get credits or rewards. Check the Referrals section for more details.',
+      "Yes. Upload your notes from your account. Every upload is reviewed before it is published, and you must have the right to share what you upload.",
+  },
+  {
+    question: "Is my information secure?",
+    answer:
+      "We use encrypted connections, hashed passwords, private file storage and access controls, and we do not sell your information. The Privacy Policy explains exactly what we collect and who helps us run the site.",
+  },
+  {
+    question: "What is the referral program?",
+    answer:
+      "Invite a friend with your referral code. When they buy premium you can earn the reward shown on the Referrals page. Rewards are given under the rules there and may be cancelled if the program is abused.",
+  },
+  {
+    question: "How do I contact the team?",
+    answer: "Use the Contact page. We reply by email.",
   },
 ];
 
-export default function FAQPage() {
+export default async function FAQPage() {
+  const [user, profile] = await Promise.all([getSessionUser(), getProfile()]);
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
-            Frequently Asked Questions
-          </h1>
-          <p className="text-lg text-slate-300">
-            Find answers to common questions about IOE Connect
+    <PublicShell user={toShellUser(profile, user)}>
+      <JsonLd
+        data={{
+          "@context": "https://schema.org",
+          "@graph": [
+            {
+              "@type": "FAQPage",
+              mainEntity: faqs.map((f) => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })),
+            },
+            breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "FAQ" }]),
+          ],
+        }}
+      />
+      <div className="mx-auto w-full max-w-3xl px-4 pb-16 pt-8 sm:px-6 sm:pt-14">
+        <header>
+          <p className="text-sm font-semibold text-primary">Help</p>
+          <h1 className="mt-2 text-4xl font-extrabold tracking-[-0.03em] sm:text-5xl">IOE Connect FAQ</h1>
+          <p className="mt-3 text-muted-foreground">
+            Quick answers about IOE notes, syllabus, past questions, premium access and the SCGPA calculator.
           </p>
-        </div>
+        </header>
 
-        {/* FAQ Items */}
-        <div className="space-y-6">
-          {faqs.map((faq, index) => (
-            <div
-              key={index}
-              className="bg-slate-800 rounded-lg border border-slate-700 overflow-hidden hover:border-blue-500 transition-colors"
-            >
-              <details className="group cursor-pointer">
-                <summary className="flex items-center justify-between p-6 font-semibold text-white hover:bg-slate-700/50 transition-colors">
-                  <span className="text-lg">{faq.question}</span>
-                  <span className="text-2xl text-blue-400 group-open:rotate-180 transition-transform">
-                    ▼
-                  </span>
-                </summary>
-                <div className="px-6 pb-6 pt-0 border-t border-slate-700 text-slate-300 leading-relaxed">
-                  {faq.answer}
-                </div>
-              </details>
-            </div>
+        <div className="mt-10 space-y-3">
+          {faqs.map((faq) => (
+            <details key={faq.question} className="group rounded-2xl border border-border bg-card shadow-xs open:shadow-md">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-2xl px-5 py-4 text-[0.9375rem] font-semibold outline-none focus-visible:ring-2 focus-visible:ring-ring [&::-webkit-details-marker]:hidden">
+                <h2 className="min-w-0 text-[0.9375rem] font-semibold leading-snug">{faq.question}</h2>
+                <span aria-hidden className="text-lg text-muted-foreground transition-transform duration-200 group-open:rotate-45">
+                  +
+                </span>
+              </summary>
+              <p className="px-5 pb-5 text-[0.9375rem] leading-relaxed text-muted-foreground">{faq.answer}</p>
+            </details>
           ))}
         </div>
 
-        {/* Still Have Questions */}
-        <div className="mt-16 bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg p-8 text-center border border-blue-700">
-          <h2 className="text-2xl font-bold text-white mb-4">
-            Still have questions?
-          </h2>
-          <p className="text-blue-200 mb-6">
-            Can&apos;t find the answer you&apos;re looking for? Our support team is here to help.
+        <div className="mt-12 rounded-2xl border border-border bg-card p-6 text-center">
+          <h2 className="text-xl font-bold tracking-[-0.015em]">Still have questions?</h2>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Read the{" "}
+            <Link href="/privacy" className="link-underline font-medium text-primary">
+              Privacy Policy
+            </Link>{" "}
+            and{" "}
+            <Link href="/terms" className="link-underline font-medium text-primary">
+              Terms of Service
+            </Link>
+            , or send us a message.
           </p>
-          <a
-            href="/contact"
-            className="inline-block px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg hover:bg-blue-50 transition-colors"
-          >
-            Contact Support
-          </a>
+          <Link href="/contact" className="mt-4 inline-flex min-h-11 items-center rounded-xl bg-primary px-6 text-sm font-semibold text-primary-foreground hover:opacity-90">
+            Contact us
+          </Link>
         </div>
       </div>
-    </main>
+    </PublicShell>
   );
 }

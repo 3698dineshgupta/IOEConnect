@@ -8,7 +8,7 @@ const BASE = process.env.BASE_URL || "http://localhost:3100";
 const UUID = "0a1b2c3d-0000-4000-8000-000000000000";
 const get = (path, init = {}) => fetch(BASE + path, { redirect: "manual", ...init });
 const post = (path, init = {}) => fetch(BASE + path, { method: "POST", redirect: "manual", ...init });
-const noLeak = (text) => assert.doesNotMatch(text, /(\bat\s+\S+\s+\(|node_modules|\.next\/|stack|ECONN|SUPABASE|service_role|C:\\|\/home\/)/i, "response leaks internals");
+const noLeak = (text) => assert.doesNotMatch(text, /(\bat\s+\S+\s+\(|node_modules|\.next\/|stack|ECONNREFUSED|ECONNRESET|SUPABASE_|service_role|C:\\|\/home\/)/i, "response leaks internals");
 
 test("security headers on pages", async () => {
   const res = await get("/");

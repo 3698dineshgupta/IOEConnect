@@ -10,8 +10,8 @@ import { formatNpr } from "@/components/community/common";
 import { getShellUser } from "@/components/community/shell-user";
 
 export const metadata: Metadata = {
-  title: "Merchandise | IOE Connect",
-  description: "IOE Connect merchandise. Contact us to place an order.",
+  title: "IOE Connect Merchandise",
+  description: "IOE Connect merchandise for IOE students. Browse the items and contact us to place an order.",
 };
 export const dynamic = "force-dynamic";
 

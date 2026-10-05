@@ -5,8 +5,9 @@ import { BugReportForm } from "@/components/community/BugReportForm";
 import { getShellUser } from "@/components/community/shell-user";
 
 export const metadata: Metadata = {
-  title: "Report a bug | IOE Connect",
-  description: "Found something broken on IOE Connect? Let us know.",
+  title: "Report a bug",
+  description: "Found something broken on IOE Connect? Tell us what happened so we can fix it quickly.",
+  robots: { index: false, follow: true },
 };
 export const dynamic = "force-dynamic";
 
